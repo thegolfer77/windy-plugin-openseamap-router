@@ -1,0 +1,31 @@
+{
+    "name": "windy-plugin-openseamap-router",
+    "version": "0.3.0",
+    "description": "OpenSeaMap-Layer, Seezeichen-Infos und Wasser-Routing f\u00fcr Windy.com",
+    "main": "dist/plugin.min.js",
+    "type": "module",
+    "scripts": {
+        "build": "rm -rf dist && mkdir dist && SERVE=false rollup -c && cp package.json dist/",
+        "build:win": "rmdir /s /q dist && mkdir dist && set SERVE=false && rollup -c && copy package.json dist\\",
+        "start": "rollup -w -c",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/windycom/windy-plugin-template.git"
+    },
+    "keywords": [
+        "windy",
+        "windy.com",
+        "plugins"
+    ],
+    "author": "Andreas",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/windycom/windy-plugin-template/issues"
+    },
+    "homepage": "https://docs.windy-plugins.com/",
+    "dependencies": {
+        "@windycom/plugin-devtools": "^3.0.3"
+    }
+}
