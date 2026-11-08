@@ -1,13 +1,83 @@
-<div class="plugin__mobile-header">
-    {title}
-</div>
-<section class="plugin__content osm-plugin">
-    <div
-        class="plugin__title plugin__title--chevron-back"
-        on:click={() => bcast.emit('rqstOpen', 'menu')}
-    >
-        {title}
-    </div>
+<section
+    class="osm-plugin"
+    class:plugin__content={!isMobileOrTablet}
+    class:osm-mobile={isMobileOrTablet}
+>
+    {#if isMobileOrTablet}
+        <!-- Compact bar for phones -->
+        <div class="mbar">
+            <span class="chip" class:on={showSeamarks} on:click={() => (showSeamarks = !showSeamarks)} title="Seezeichen"
+                >⚓</span
+            >
+            <span class="chip" class:active={mode === 'info'} on:click={() => (mode = 'info')}>ℹ️</span>
+            <span class="chip" class:active={mode === 'route'} on:click={() => (mode = 'route')}>🧭</span>
+            <span class="chip" class:active={mode === 'track'} on:click={() => (mode = 'track')}
+                >{recording ? '🔴' : '⏺'}</span
+            >
+            <span class="chip more" on:click={() => (expanded = !expanded)}>{expanded ? '▾' : '▴'}</span>
+            <span class="chip" on:click={() => bcast.emit('rqstOpen', 'menu')} title="Schließen">✕</span>
+        </div>
+        <div class="msum">
+            {#if mode === 'info'}
+                {#if infoLoading}
+                    Lade…
+                {:else if infos.length}
+                    <span on:click={() => (expanded = true)}
+                        ><b>{infos[0].title}</b>{infos[0].subtitle ? ' · ' + infos[0].subtitle : ''}{infos[0]
+                            .lights.length
+                            ? ' · 💡 ' + infos[0].lights[0]
+                            : ''}</span
+                    >
+                {:else if infoError}
+                    <span class="error">{infoError}</span>
+                {:else}
+                    <span class="dim">Tippe auf ein Seezeichen</span>
+                {/if}
+            {:else if mode === 'route'}
+                {#if routing}
+                    {routeStatus || 'Berechne…'}
+                {:else if route.length > 1}
+                    <b>{totalNm.toFixed(1)} sm</b> · {fmtDuration(totalNm / speedKn)}
+                    <span class="mbtn" on:click={() => (expanded = true)}>Kurse</span>
+                    <span class="mbtn" on:click={exportGpx}>GPX</span>
+                    <span class="mbtn" on:click={clearRoute}>✕</span>
+                {:else if routeError}
+                    <span class="error">{routeError}</span>
+                {:else}
+                    <span class="dim">{points.length ? `${points.length} Punkt(e)` : 'Tippe Start und Ziel'}</span>
+                    {#if points.length}
+                        <span class="mbtn" on:click={() => removePoint(points.length - 1)}>↶</span>
+                    {/if}
+                    {#if points.length > 1}
+                        <span class="mbtn primary" on:click={computeRoute}>Berechnen</span>
+                    {/if}
+                {/if}
+            {:else}
+                {#if trackPts.length}
+                    <b>{stats.distanceNm.toFixed(2)} sm</b>
+                    {#if recording}· {liveSog !== null ? liveSog.toFixed(1) : '–'} kn{/if}
+                    · {fmtSeconds(stats.durationS)}
+                {:else}
+                    <span class="dim">Kein Track</span>
+                {/if}
+                {#if recording}
+                    <span class="mbtn" on:click={stopRecording}>⏸</span>
+                {:else}
+                    <span class="mbtn primary" on:click={startRecording}>▶</span>
+                {/if}
+            {/if}
+        </div>
+    {:else}
+        <div
+            class="plugin__title plugin__title--chevron-back"
+            on:click={() => bcast.emit('rqstOpen', 'menu')}
+        >
+            {title}
+        </div>
+    {/if}
+
+    {#if !isMobileOrTablet || expanded}
+    <div class:mscroll={isMobileOrTablet}>
 
     <!-- LAYER -->
     <div class="box">
@@ -25,6 +95,7 @@
         <p class="hint">Seezeichen erscheinen ab ca. Zoom 9, Details ab Zoom 12.</p>
     </div>
 
+    {#if !isMobileOrTablet}
     <!-- MODE -->
     <div class="tabs">
         <div class="tab" class:active={mode === 'info'} on:click={() => (mode = 'info')}>ℹ️ Info</div>
@@ -33,6 +104,7 @@
             {recording ? '🔴' : '⏺'} Track
         </div>
     </div>
+    {/if}
 
     {#if mode === 'info'}
         <p class="hint">Klicke auf der Karte auf ein Seezeichen, einen Hafen oder ein Hindernis.</p>
@@ -244,10 +316,13 @@
         Daten © OpenSeaMap & OpenStreetMap-Mitwirkende (ODbL). Nur zur Planung, ersetzt keine amtliche
         Seekarte. Wassertiefen werden beim Routing nicht berücksichtigt.
     </p>
+    </div>
+    {/if}
 </section>
 
 <script lang="ts">
     import bcast from '@windy/broadcast';
+    import { isMobileOrTablet } from '@windy/rootScope';
     import { map } from '@windy/map';
     import { singleclick } from '@windy/singleclick';
 
@@ -302,6 +377,7 @@
     $: saveSettings({ showSeamarks, opacity, clearanceM, speedKn });
 
     let mode: 'info' | 'route' | 'track' = 'info';
+    let expanded = false;
 
     // ---------- OpenSeaMap tile layer ----------
     let seamarkLayer: L.TileLayer | null = null;
@@ -941,6 +1017,63 @@
 </script>
 
 <style lang="less">
+    .osm-mobile {
+        padding: 6px 10px 8px;
+        font-size: 13px;
+        .mbar {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .chip {
+            flex: none;
+            min-width: 34px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.12);
+            cursor: pointer;
+            &.active {
+                background: #ff7a00;
+            }
+            &.on {
+                box-shadow: inset 0 0 0 2px #2a9df4;
+            }
+            &.more {
+                margin-left: auto;
+            }
+        }
+        .msum {
+            margin-top: 6px;
+            min-height: 22px;
+            line-height: 22px;
+            white-space: nowrap;
+            overflow-x: auto;
+            .dim {
+                opacity: 0.7;
+            }
+        }
+        .mbtn {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 0 10px;
+            border-radius: 11px;
+            background: rgba(255, 255, 255, 0.15);
+            cursor: pointer;
+            &.primary {
+                background: #ff7a00;
+                color: #fff;
+                font-weight: bold;
+            }
+        }
+        .mscroll {
+            margin-top: 8px;
+            max-height: 40vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+    }
     .osm-plugin {
         .box {
             background: rgba(255, 255, 255, 0.06);

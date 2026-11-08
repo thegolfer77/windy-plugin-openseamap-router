@@ -2,7 +2,7 @@ import type { ExternalPluginConfig } from '@windy/interfaces';
 
 const config: ExternalPluginConfig = {
     name: 'windy-plugin-openseamap-router',
-    version: '0.3.0',
+    version: '0.4.0',
     icon: '⚓',
     title: 'OpenSeaMap & Routing',
     description:
@@ -11,7 +11,7 @@ const config: ExternalPluginConfig = {
     repository: 'https://github.com/windycom/windy-plugin-template',
     desktopUI: 'rhpane',
     desktopWidth: 360,
-    mobileUI: 'fullscreen',
+    mobileUI: 'small',
     routerPath: '/openseamap-router',
     listenToSingleclick: true,
     private: true,

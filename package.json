@@ -1,6 +1,6 @@
 {
     "name": "windy-plugin-openseamap-router",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "description": "OpenSeaMap-Layer, Seezeichen-Infos und Wasser-Routing f\u00fcr Windy.com",
     "main": "dist/plugin.min.js",
     "type": "module",
